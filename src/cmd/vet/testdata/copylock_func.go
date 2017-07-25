@@ -87,7 +87,7 @@ func FuncCallInterfaceArg(f func(a int, b interface{})) {
 	f(2, &t)
 	f(3, &sync.Mutex{})
 	f(4, m) // ERROR "function call copies lock value: sync.Mutex"
-	f(5, t) // ERROR "function call copies lock value: struct{lock sync.Mutex} contains sync.Mutex"
+	f(5, t) // ERROR "function call copies lock value: struct.lock sync.Mutex. contains sync.Mutex"
 }
 
 // Returning lock via interface value
@@ -103,7 +103,7 @@ func ReturnViaInterface(x int) (int, interface{}) {
 	case 2:
 		return 2, m // ERROR "return copies lock value: sync.Mutex"
 	default:
-		return 3, t // ERROR "return copies lock value: struct{lock sync.Mutex} contains sync.Mutex"
+		return 3, t // ERROR "return copies lock value: struct.lock sync.Mutex. contains sync.Mutex"
 	}
 }
 
