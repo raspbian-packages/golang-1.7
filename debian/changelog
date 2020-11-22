@@ -1,4 +1,4 @@
-golang-1.7 (1.7.4-2+rpi1) stretch-staging; urgency=medium
+golang-1.7 (1.7.4-2+rpi1+deb9u2) stretch-staging; urgency=medium
 
   [changes brought forward from golang 2:1.5.3-1+rpi1 by Peter Michael Green <plugwash@raspbian.org> at Thu, 21 Jan 2016 20:49:39 +0000]
   * Force build for armv6.
@@ -6,7 +6,28 @@ golang-1.7 (1.7.4-2+rpi1) stretch-staging; urgency=medium
   [changes introduced in golang 2:1.6.1-2+rpi1 by Peter Michael Green]
   * Disable testsuite.
 
- -- Raspbian forward porter <root@raspbian.org>  Wed, 26 Apr 2017 20:36:28 +0000
+ -- Raspbian forward porter <root@raspbian.org>  Sun, 22 Nov 2020 00:45:11 +0000
+
+golang-1.7 (1.7.4-2+deb9u2) stretch-security; urgency=high
+
+  * Non-maintainer upload by the LTS Team. 
+  * CVE-2020-15586
+    Using the 100-continue in HTTP headers received by a net/http/Server
+    can lead to a data race involving the connection's buffered writer.
+  * CVE-2020-16845
+    Certain invalid inputs to ReadUvarint or ReadVarint could cause those
+    functions to read an unlimited number of bytes from the ByteReader
+    argument before returning an error. 
+ 
+ -- Thorsten Alteholz <debian@alteholz.de>  Fri, 20 Nov 2020 17:03:02 +0100
+
+golang-1.7 (1.7.4-2+deb9u1) stretch-security; urgency=high
+
+  * Team upload.
+  * Add patch to fix CVE-2019-6486
+  * Add patch to fix CVE-2018-7187
+
+ -- Dr. Tobias Quathamer <toddy@debian.org>  Mon, 28 Jan 2019 22:24:55 +0100
 
 golang-1.7 (1.7.4-2) unstable; urgency=medium
 
