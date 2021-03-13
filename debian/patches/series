@@ -1,0 +1,14 @@
+cl-29995--tzdata-2016g.patch
+cl-37964--tzdata-2017a.patch
+cve-2019-6486.patch
+cve-2018-7187.patch
+
+CVE-2020-16845.patch
+CVE-2020-15586.patch
+
+CVE-2017-15041.patch
+CVE-2018-16873,16874.patch
+CVE-2019-9741.patch
+CVE-2019-16276.patch
+CVE-2019-17596.patch
+CVE-2021-3114.patch
