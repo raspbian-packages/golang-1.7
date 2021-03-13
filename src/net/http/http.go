@@ -41,3 +41,14 @@ func removeEmptyPort(host string) string {
 func isNotToken(r rune) bool {
 	return !httplex.IsTokenRune(r)
 }
+
+// stringContainsCTLByte reports whether s contains any ASCII control character.
+func stringContainsCTLByte(s string) bool {
+	for i := 0; i < len(s); i++ {
+		b := s[i]
+		if b < ' ' || b == 0x7f {
+			return true
+		}
+	}
+	return false
+}
