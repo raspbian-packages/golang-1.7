@@ -1388,6 +1388,12 @@ func TestShouldEscape(t *testing.T) {
 			t.Errorf("shouldEscape(%q, %v) returned %v; expected %v", tt.in, tt.mode, !tt.escape, tt.escape)
 		}
 	}
+
+	// But don't reject non-ASCII CTLs, at least for now:
+	if _, err := Parse("http://foo.com/ctl\x80"); err != nil {
+		t.Errorf("error parsing URL with non-ASCII control byte: %v", err)
+	}
+
 }
 
 type timeoutError struct {
@@ -1467,6 +1473,21 @@ func TestURLErrorImplementsNetError(t *testing.T) {
 		}
 		if err.Temporary() != tt.temporary {
 			t.Errorf("%d: err.Temporary(): want %v, have %v", i+1, tt.temporary, err.Temporary())
+		}
+	}
+}
+
+func TestRejectControlCharacters(t *testing.T) {
+	tests := []string{
+		"http://foo.com/?foo\nbar",
+		"http\r://foo.com/",
+		"http://foo\x7f.com/",
+	}
+	for _, s := range tests {
+		_, err := Parse(s)
+		const wantSub = "net/url: invalid control character in URL"
+		if got := fmt.Sprint(err); !strings.Contains(got, wantSub) {
+			t.Errorf("Parse(%q) error = %q; want substring %q", s, got, wantSub)
 		}
 	}
 }

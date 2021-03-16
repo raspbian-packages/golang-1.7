@@ -1,4 +1,4 @@
-golang-1.7 (1.7.4-2+rpi1+deb9u2) stretch-staging; urgency=medium
+golang-1.7 (1.7.4-2+rpi1+deb9u3) stretch-staging; urgency=medium
 
   [changes brought forward from golang 2:1.5.3-1+rpi1 by Peter Michael Green <plugwash@raspbian.org> at Thu, 21 Jan 2016 20:49:39 +0000]
   * Force build for armv6.
@@ -6,7 +6,44 @@ golang-1.7 (1.7.4-2+rpi1+deb9u2) stretch-staging; urgency=medium
   [changes introduced in golang 2:1.6.1-2+rpi1 by Peter Michael Green]
   * Disable testsuite.
 
- -- Raspbian forward porter <root@raspbian.org>  Sun, 22 Nov 2020 00:45:11 +0000
+ -- Raspbian forward porter <root@raspbian.org>  Tue, 16 Mar 2021 16:13:07 +0000
+
+golang-1.7 (1.7.4-2+deb9u3) stretch-security; urgency=high
+
+  * Non-maintainer upload by the LTS Security Team.
+  * CVE-2017-15041: Go allows "go get" remote command execution. Using
+    custom domains, it is possible to arrange things so that
+    example.com/pkg1 points to a Subversion repository but
+    example.com/pkg1/pkg2 points to a Git repository. If the Subversion
+    repository includes a Git checkout in its pkg2 directory and some
+    other work is done to ensure the proper ordering of operations, "go
+    get" can be tricked into reusing this Git checkout for the fetch of
+    code from pkg2. If the Subversion repository's Git checkout has
+    malicious commands in .git/hooks/, they will execute on the system
+    running "go get."
+  * CVE-2018-16873: the "go get" command is vulnerable to remote code
+    execution when executed with the -u flag and the import path of a
+    malicious Go package, as it may treat the parent directory as a Git
+    repository root, containing malicious configuration.
+  * CVE-2018-16874: the "go get" command is vulnerable to directory
+    traversal when executed with the import path of a malicious Go package
+    which contains curly braces (both '{' and '}' characters). The
+    attacker can cause an arbitrary filesystem write, which can lead to
+    code execution.
+  * CVE-2019-9741: in net/http, CRLF injection is possible if the attacker
+    controls a url parameter, as demonstrated by the second argument to
+    http.NewRequest with \r\n followed by an HTTP header or a Redis
+    command.
+  * CVE-2019-16276: Go allows HTTP Request Smuggling.
+  * CVE-2019-17596: Go can panic upon an attempt to process network
+    traffic containing an invalid DSA public key. There are several attack
+    scenarios, such as traffic from a client to a server that verifies
+    client certificates.
+  * CVE-2021-3114: crypto/elliptic/p224.go can generate incorrect outputs,
+    related to an underflow of the lowest limb during the final complete
+    reduction in the P-224 field.
+
+ -- Sylvain Beucler <beuc@debian.org>  Sat, 13 Mar 2021 15:48:57 +0100
 
 golang-1.7 (1.7.4-2+deb9u2) stretch-security; urgency=high
 
