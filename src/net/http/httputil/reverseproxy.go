@@ -149,6 +149,15 @@ func (p *ReverseProxy) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 	outreq := new(http.Request)
 	*outreq = *req // includes shallow copies of maps, but okay
+	if outreq.Body != nil {
+		// Reading from the request body after returning from a handler is not
+		// allowed, and the RoundTrip goroutine that reads the Body can outlive
+		// this handler. This can lead to a crash if the handler panics (see
+		// Issue 46866). Although calling Close doesn't guarantee there isn't
+		// any Read in flight after the handle returns, in practice it's safe to
+		// read after closing it.
+		defer outreq.Body.Close()
+	}
 
 	if closeNotifier, ok := rw.(http.CloseNotifier); ok {
 		if requestCanceler, ok := transport.(requestCanceler); ok {
