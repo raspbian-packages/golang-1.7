@@ -208,3 +208,10 @@ func TestOpenFatFailure(t *testing.T) {
 		t.Errorf("OpenFat %s: got %v, want nil", filename, ff)
 	}
 }
+
+func TestOpenBadDysymCmd(t *testing.T) {
+	_, err := Open("testdata/gcc-amd64-darwin-exec-with-bad-dysym")
+	if err == nil {
+		t.Fatal("openObscured did not fail when opening a file with an invalid dynamic symbol table command")
+	}
+}
