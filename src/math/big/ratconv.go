@@ -35,9 +35,23 @@ func (z *Rat) Scan(s fmt.ScanState, ch rune) error {
 }
 
 // SetString sets z to the value of s and returns z and a boolean indicating
-// success. s can be given as a fraction "a/b" or as a floating-point number
-// optionally followed by an exponent. If the operation failed, the value of
-// z is undefined but the returned value is nil.
+// success. s can be given as a (possibly signed) fraction "a/b", or as a
+// floating-point number optionally followed by an exponent.
+// If a fraction is provided, both the dividend and the divisor may be a
+// decimal integer or independently use a prefix of ``0b'', ``0'' or ``0o'',
+// or ``0x'' (or their upper-case variants) to denote a binary, octal, or
+// hexadecimal integer, respectively. The divisor may not be signed.
+// If a floating-point number is provided, it may be in decimal form or
+// use any of the same prefixes as above but for ``0'' to denote a non-decimal
+// mantissa. A leading ``0'' is considered a decimal leading 0; it does not
+// indicate octal representation in this case.
+// An optional base-10 ``e'' or base-2 ``p'' (or their upper-case variants)
+// exponent may be provided as well, except for hexadecimal floats which
+// only accept an (optional) ``p'' exponent (because an ``e'' or ``E'' cannot
+// be distinguished from a mantissa digit). If the exponent's absolute value
+// is too large, the operation may fail.
+// The entire string, not just a prefix, must be valid for success. If the
+// operation failed, the value of z is undefined but the returned value is nil.
 func (z *Rat) SetString(s string) (*Rat, bool) {
 	if len(s) == 0 {
 		return nil, false
@@ -49,9 +63,13 @@ func (z *Rat) SetString(s string) (*Rat, bool) {
 		if _, ok := z.a.SetString(s[:sep], 0); !ok {
 			return nil, false
 		}
-		s = s[sep+1:]
+		r := strings.NewReader(s[sep+1:])
 		var err error
-		if z.b.abs, _, _, err = z.b.abs.scan(strings.NewReader(s), 0, false); err != nil {
+		if z.b.abs, _, _, err = z.b.abs.scan(r, 0, false); err != nil {
+			return nil, false
+		}
+		// entire string must have been consumed
+		if _, err = r.ReadByte(); err != io.EOF {
 			return nil, false
 		}
 		if len(z.b.abs) == 0 {
@@ -70,15 +88,17 @@ func (z *Rat) SetString(s string) (*Rat, bool) {
 	}
 
 	// mantissa
-	var ecorr int
-	z.a.abs, _, ecorr, err = z.a.abs.scan(r, 10, true)
+	var base int
+	var fcount int // fractional digit count; valid if <= 0
+	z.a.abs, base, fcount, err = z.a.abs.scan(r, 0, true)
 	if err != nil {
 		return nil, false
 	}
 
 	// exponent
 	var exp int64
-	exp, _, err = scanExponent(r, false)
+	var ebase int
+	exp, ebase, err = scanExponent(r, true)
 	if err != nil {
 		return nil, false
 	}
@@ -94,30 +114,91 @@ func (z *Rat) SetString(s string) (*Rat, bool) {
 	}
 	// len(z.a.abs) > 0
 
-	// correct exponent
-	if ecorr < 0 {
-		exp += int64(ecorr)
+	// The mantissa may have a radix point (fcount <= 0) and there
+	// may be a nonzero exponent exp. The radix point amounts to a
+	// division by base**(-fcount), which equals a multiplication by
+	// base**fcount. An exponent means multiplication by ebase**exp.
+	// Multiplications are commutative, so we can apply them in any
+	// order. We only have powers of 2 and 10, and we split powers
+	// of 10 into the product of the same powers of 2 and 5. This
+	// may reduce the size of shift/multiplication factors or
+	// divisors required to create the final fraction, depending
+	// on the actual floating-point value.
+
+	// determine binary or decimal exponent contribution of radix point
+	var exp2, exp5 int64
+	if fcount < 0 {
+		// The mantissa has a radix point ddd.dddd; and
+		// -fcount is the number of digits to the right
+		// of '.'. Adjust relevant exponent accordingly.
+		d := int64(fcount)
+		switch base {
+		case 10:
+			exp5 = d
+			fallthrough // 10**e == 5**e * 2**e
+		case 2:
+			exp2 = d
+		case 8:
+			exp2 = d * 3 // octal digits are 3 bits each
+		case 16:
+			exp2 = d * 4 // hexadecimal digits are 4 bits each
+		default:
+			panic("unexpected mantissa base")
+		}
+		// fcount consumed - not needed anymore
 	}
 
-	// compute exponent power
-	expabs := exp
-	if expabs < 0 {
-		expabs = -expabs
+	// take actual exponent into account
+	switch ebase {
+	case 10:
+		exp5 += exp
+		fallthrough // see fallthrough above
+	case 2:
+		exp2 += exp
+	default:
+		panic("unexpected exponent base")
 	}
-	powTen := nat(nil).expNN(natTen, nat(nil).setWord(Word(expabs)), nil)
+	// exp consumed - not needed anymore
 
-	// complete fraction
-	if exp < 0 {
-		z.b.abs = powTen
-		z.norm()
+	// apply exp5 contributions
+	// (start with exp5 so the numbers to multiply are smaller)
+	if exp5 != 0 {
+		n := exp5
+		if n < 0 {
+			n = -n
+			if n < 0 {
+				// This can occur if -n overflows. -(-1 << 63) would become
+				// -1 << 63, which is still negative.
+				return nil, false
+			}
+		}
+		if n > 1e6 {
+			return nil, false // avoid excessively large exponents
+		}
+		pow5 := z.b.abs.expNN(natFive, nat(nil).setWord(Word(n)), nil) // use underlying array of z.b.abs
+		if exp5 > 0 {
+			z.a.abs = z.a.abs.mul(z.a.abs, pow5)
+			z.b.abs = z.b.abs.setWord(1)
+		} else {
+			z.b.abs = pow5
+		}
 	} else {
-		z.a.abs = z.a.abs.mul(z.a.abs, powTen)
-		z.b.abs = z.b.abs[:0]
+		z.b.abs = z.b.abs.setWord(1)
+	}
+
+	// apply exp2 contributions
+	if exp2 < -1e7 || exp2 > 1e7 {
+		return nil, false // avoid excessively large exponents
+	}
+	if exp2 > 0 {
+		z.a.abs = z.a.abs.shl(z.a.abs, uint(exp2))
+	} else if exp2 < 0 {
+		z.b.abs = z.b.abs.shl(z.b.abs, uint(-exp2))
 	}
 
 	z.a.neg = neg && len(z.a.abs) > 0 // 0 has no sign
 
-	return z, true
+	return z.norm(), true
 }
 
 // scanExponent scans the longest possible prefix of r representing a decimal
