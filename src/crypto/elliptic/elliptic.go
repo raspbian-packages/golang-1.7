@@ -53,6 +53,11 @@ func (curve *CurveParams) Params() *CurveParams {
 }
 
 func (curve *CurveParams) IsOnCurve(x, y *big.Int) bool {
+	if x.Sign() < 0 || x.Cmp(curve.P) >= 0 ||
+		y.Sign() < 0 || y.Cmp(curve.P) >= 0 {
+		return false
+	}
+
 	// y² = x³ - 3x + b
 	y2 := new(big.Int).Mul(y, y)
 	y2.Mod(y2, curve.P)
