@@ -1,4 +1,4 @@
-golang-1.7 (1.7.4-2+rpi1+deb9u4) stretch-staging; urgency=medium
+golang-1.7 (1.7.4-2+rpi1+deb9u5) stretch-staging; urgency=medium
 
   [changes brought forward from golang 2:1.5.3-1+rpi1 by Peter Michael Green <plugwash@raspbian.org> at Thu, 21 Jan 2016 20:49:39 +0000]
   * Force build for armv6.
@@ -6,7 +6,20 @@ golang-1.7 (1.7.4-2+rpi1+deb9u4) stretch-staging; urgency=medium
   [changes introduced in golang 2:1.6.1-2+rpi1 by Peter Michael Green]
   * Disable testsuite.
 
- -- Raspbian forward porter <root@raspbian.org>  Tue, 25 Jan 2022 21:48:13 +0000
+ -- Raspbian forward porter <root@raspbian.org>  Thu, 28 Apr 2022 14:38:49 +0000
+
+golang-1.7 (1.7.4-2+deb9u5) stretch-security; urgency=high
+
+  * Non-maintainer upload by the LTS Security Team.
+  * CVE-2022-23772: Rat.SetString in math/big has an overflow that can
+    lead to Uncontrolled Memory Consumption.
+  * CVE-2022-23806: Curve.IsOnCurve in crypto/elliptic can incorrectly
+    return true in situations with a big.Int value that is not a valid
+    field element.
+  * CVE-2022-24921: regexp.Compile allows stack exhaustion via a deeply
+    nested expression.
+
+ -- Sylvain Beucler <beuc@debian.org>  Tue, 26 Apr 2022 19:32:45 +0200
 
 golang-1.7 (1.7.4-2+deb9u4) stretch-security; urgency=high
 

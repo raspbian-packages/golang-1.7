@@ -30,6 +30,7 @@ type nat []Word
 var (
 	natOne = nat{1}
 	natTwo = nat{2}
+	natFive = nat{5}
 	natTen = nat{10}
 )
 

@@ -50,6 +50,7 @@ var setStringTests = []StringTest{
 	{"204211327800791583.81095", "4084226556015831676219/20000", true},
 	{"0e9999999999", "0", true}, // issue #16176
 	{in: "1/0"},
+	{in: "13e-9223372036854775808"}, // CVE-2022-23772
 }
 
 // These are not supported by fmt.Fscanf.
